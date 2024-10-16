@@ -1,0 +1,241 @@
+from tkinter import Button, Tk, Frame, Label, PhotoImage, messagebox
+import random
+import decimal
+from decimal import Decimal
+
+# setting the rounding mode
+decimal.getcontext().rounding = decimal.ROUND_HALF_UP
+
+# command which asks the user if they actually want to close the window when they click the close button
+def close_window():
+    answer = messagebox.askyesno('Deal or no Deal', 'Are you sure you want to quit?')
+    if answer == True:
+        messagebox.showinfo('Deal or no Deal', 'Thank you for playing Deal or No Deal!')
+        exit()
+
+# command for when the user wants to play again
+def restart():
+    global numclicks, casechosen, roundnum, round, choosenum, casenum, values, values2, values3, indexmoney, listmoney, listofmoneyvalues, numclicks, casechosen, roundnum, round, choosenum
+    # resetting all the variables
+    numclicks = 0
+    casechosen = 0
+    roundnum = 1
+    round = 6
+    choosenum = 6
+    listofmoneyvalues = []
+    values = [0.01, 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 750, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 200000, 300000, 400000, 500000, 750000, 1000000]
+    values2 = [0.01, 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 750, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 200000, 300000, 400000, 500000, 750000, 1000000]
+    values3 = [0.01, 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 750, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 200000, 300000, 400000, 500000, 750000, 1000000]
+    # reshuffling the money values
+    random.shuffle(values)
+    for index in range(len(values)):
+        listofmoneyvalues.append(PhotoImage(file=f'images/money/{values3[index]}.png'))
+    indexmoney = 0
+    # reoutputting all the money values along the east and west frame
+    for cols in range(2):
+        for rows in range(13):
+            if cols == 0:
+                listmoney[rows][cols].config(image=listofmoneyvalues[indexmoney])
+            else:
+                listmoney[rows][cols].config(image=listofmoneyvalues[indexmoney])
+            indexmoney += 1
+    lblPlayersCase.config(image=imgPlayersCase)
+    caseindex = 0
+    # reoutputting all the cases in the center frame
+    for rows in range(len(caselist)):
+        for cols in range(len(caselist[rows])):
+            if rows == 4:
+                caselist[rows][cols] = Button(centerframebottom, image=cases[caseindex], bg='black', highlightbackground = "black",highlightthickness = 2, bd=0, activebackground='black', command=lambda r=rows,c=cols, i=caseindex: button_selected(r, c, i))
+                caselist[rows][cols].grid(row=0, column=cols, padx=5)  
+            else:
+                caselist[rows][cols] = Button(centerframe, image=cases[caseindex], bg='black', highlightbackground = "black",highlightthickness = 2, bd=0, activebackground='black', command=lambda r=rows,c=cols, i=caseindex: button_selected(r, c, i))
+                caselist[rows][cols].grid(row=rows, column=cols)  
+            caseindex += 1
+
+# setting variables needed in the game for calculation          
+numclicks = 0
+casechosen = 0
+roundnum = 1
+round = 6
+choosenum = 6
+def button_selected(rownum, colnum, index):
+    global numclicks, caselist, casechosen, round, choosenum, cases, listofmoneyvalues, listmoney, values2, roundnum
+    # when the button is clicked the number of clicks is stored 
+    numclicks += 1
+    # when the first button is clicked that becomes the users case - setting properties of that button and moving the image
+    if numclicks == 1:
+        imgcasechosen = caselist[rownum][colnum].cget('image')
+        caselist[rownum][colnum].config(image=imgBlankCase, state='disabled', disabledforeground='black')
+        lblPlayersCase.config(image=imgcasechosen)
+        casechosen = values[index]
+        lblMessage.config(text=f'Open {choosenum} briefcase(s)!')
+    else:
+        # for the other buttons pressed a message box with the value within will come up the case and side number value will disapear and the case location will be disabled
+        casenum = index + 1
+        caselist[rownum][colnum].config(image=imgBlankCase, state='disabled', disabledforeground='black')
+        caseval = values[index]
+        for x in range(len(values3)):
+            if caseval == values3[x]:
+                index = x
+        listofmoneyvalues[index].config(file='images/money/blankmoney.png')
+        indexmoney = 0
+        for cols in range(2):
+            for rows in range(13):
+                if cols == 0:
+                    listmoney[rows][cols].config(image=listofmoneyvalues[indexmoney], bg='black')
+                else:
+                    listmoney[rows][cols].config(image=listofmoneyvalues[indexmoney], bg='black')
+                indexmoney += 1
+        # removing the money value declared at the case when clicked
+        values2.remove(caseval)
+        if caseval == 0.01:
+            caseval = Decimal(0.01)
+            messagebox.showinfo(f'Case #{casenum}', f'Case #{casenum} contains ${caseval:,.2f}!')
+        else:
+            messagebox.showinfo(f'Case #{casenum}', f'Case #{casenum} contains ${caseval:,d}!')
+        choosenum -= 1
+        lblMessage.config(text=f'Open {choosenum} briefcase(s)!')
+        valuesum = 0
+    # when the number of choices are 0 the banker has to offer a deal
+    if choosenum == 0:
+        # calculating the bankers offer
+        for avg in values2:
+            valuesum += avg
+        averagevaluesleft = valuesum / len(values2)
+        Bankoffer = Decimal(averagevaluesleft * roundnum / 10)
+        answer = messagebox.askyesno('Banker\'s Offer', f'The banker\'s offer is ${Bankoffer:,.2f}\nWould you like to take the deal?')
+        # if the player takes the deal the following message boxes will pop up
+        if answer == True:
+            messagebox.showinfo('It\'s a deal!', f'Congratulations...you\'re going home with ${Bankoffer:,.2f}')
+            messagebox.showinfo('Deal or No Deal', f'You could have gone home with ${casechosen:,.2f}')
+            playagain = messagebox.askyesno('Deal or No Deal', f'Would you like to play again?')
+            # if they choose to play again the game will restart otherwise they will exit
+            if playagain == False:
+                messagebox.showinfo('Game Over', 'Thank you for playing Deal or No Deal!')
+                exit()
+            else:
+                restart()
+        # increasing the roundnum and round every time a offer is given - you open a fewer number of briefcases 
+        roundnum += 1
+        if roundnum == 9:
+            round = 1
+        elif roundnum >= 6:
+            round = 1
+        else:
+            round -= 1
+        choosenum = round
+        lblMessage.config(text=f'Open {choosenum} briefcase(s)!')
+        # when there are only 2 cases left the player will be asked if they want to keep their case or take the one left
+        if len(values2) <= 2:
+            choosenum = 0
+            round = 0
+            lblMessage.config(text=f'Open 0 briefcase(s)!')
+            owncaseanswer = messagebox.askyesno("Deal of No Deal","There is only one case left!\nWould you like to keep your case?")
+            if casechosen == 0.01:
+                casechosen = Decimal(0.01)
+            # if they take their own case the following message box will show up
+            if owncaseanswer == True:
+                messagebox.showinfo("Deal or No Deal", f"You\'re going home with ${casechosen:,.2f}")
+                # they will be asked if they want to play again - if they do the game will restart otherwise will exit
+                playagain = messagebox.askyesno("Deal or NO Deal", "Would you like to play again?")
+                if playagain == False:
+                    messagebox.showinfo('Game Over', 'Thank you for playing Deal or No Deal!')
+                    exit()
+                else:
+                    restart()
+            else:
+                # if they don't want their own case they will get a message stating the amount of the other case that they are going home with
+                values2.remove(casechosen)
+                if values2[0] == 0.01:
+                    values2[0] = Decimal(0.01)
+                messagebox.showinfo("Deal or No Deal", f"You\'re going home with ${values2[0]:,.2f}")
+                # they will be asked if they want to play again - if they do the game will restart otherwise will exit
+                playagain = messagebox.askyesno("Deal or NO Deal", "Would you like to play again?")
+                if playagain == False:
+                    messagebox.showinfo('Game Over', 'Thank you for playing Deal or No Deal!')
+                    exit()
+                else:
+                    restart()
+
+# creating and setting the interface
+root = Tk()
+root.title('Deal or No Deal')
+root.protocol('WM_DELETE_WINDOW', close_window)
+
+# initilizing the images
+casenum = 1
+cases = []
+for case in range(26):
+    cases.append(PhotoImage(file=f'images/suitcases/case{casenum}.png'))
+    casenum +=1
+imgBlankCase = PhotoImage(file='images/suitcases/blankcase.png')
+
+# creating lists of the money values
+values = [0.01, 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 750, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 200000, 300000, 400000, 500000, 750000, 1000000]
+values2 = [0.01, 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 750, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 200000, 300000, 400000, 500000, 750000, 1000000]
+values3 = [0.01, 1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 750, 1000, 5000, 10000, 25000, 50000, 75000, 100000, 200000, 300000, 400000, 500000, 750000, 1000000]
+listofmoneyvalues = []
+for index in range(len(values)):
+    listofmoneyvalues.append(PhotoImage(file=f'images/money/{values[index]}.png'))
+random.shuffle(values)
+imgBlankMoney = PhotoImage(file='images/money/blankmoney.png')
+
+frame = Frame(root, padx=10, pady=10, bg='black')
+frame.pack()
+
+imgTitle = PhotoImage(file='images/dond_logo.png')
+lblTitle = Label(frame, image=imgTitle, border=0)
+lblTitle.grid(row=0, column=0, columnspan=3)
+
+westframe = Frame(frame, padx=10, pady=10, bg='black')
+westframe.grid(row=1, column=0)
+centerframe = Frame(frame, padx=10, pady=10, bg='black')
+centerframe.grid(row=1, column=1)
+centerframebottom = Frame(centerframe, padx=10, pady=10, bg='black')
+centerframebottom.grid(row=5, column=0, columnspan=5)
+eastframe = Frame(frame, padx=10, pady=10, bg='black')
+eastframe.grid(row=1, column=2)
+
+lblMessage = Label(frame, width=35, bg='black', font=('Century Gothic', 14, 'bold'), fg='#fcea97', text='Choose one of the briefcases!')
+lblMessage.grid(row=2, column=1, padx=10, pady=5)
+
+imgPlayersCase = imgBlankCase
+lblPlayersCase = Label(frame, image=imgPlayersCase, bg='black')
+lblPlayersCase.grid(row=2, column=0)
+
+# outputting the cases 
+numcols = [5, 6]
+caseindex = 0
+caselist =  [[] for rows in range(5)]
+
+for rows in range(len(caselist)):
+    if rows == 4:
+        caselist[rows] = [0] * numcols[1]
+    else:
+        caselist[rows] = [0] * numcols[0]
+for rows in range(len(caselist)):
+    for cols in range(len(caselist[rows])):
+        if rows == 4:
+            caselist[rows][cols] = Button(centerframebottom, image=cases[caseindex], bg='black', highlightbackground = "black",highlightthickness = 2, bd=0, activebackground='black', command=lambda r=rows,c=cols, i=caseindex: button_selected(r, c, i))
+            caselist[rows][cols].grid(row=0, column=cols, padx=5)  
+        else:
+            caselist[rows][cols] = Button(centerframe, image=cases[caseindex], bg='black', highlightbackground = "black",highlightthickness = 2, bd=0, activebackground='black', command=lambda r=rows,c=cols, i=caseindex: button_selected(r, c, i))
+            caselist[rows][cols].grid(row=rows, column=cols)  
+        caseindex += 1
+
+# outputting the money values to the east and west frame
+listmoney = [[None for cols in range(2)]for rows in range(13)]
+indexmoney = 0
+for cols in range(2):
+    for rows in range(13):
+        if cols == 0:
+            listmoney[rows][cols] = Label(westframe, image=listofmoneyvalues[indexmoney], bg='black')
+            listmoney[rows][cols].grid(row=rows, column=0, pady=5)    
+        else:
+            listmoney[rows][cols] = Label(eastframe, image=listofmoneyvalues[indexmoney], bg='black')
+            listmoney[rows][cols].grid(row=rows, column=0,pady=5)    
+        indexmoney += 1
+
+root.update()
+root.geometry(f'{frame.winfo_width()}x{frame.winfo_height()}+{(root.winfo_screenwidth() - frame.winfo_width()) //2}+{(root.winfo_screenheight() - frame.winfo_height()) // 2}')
+root.mainloop()
